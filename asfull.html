@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Adventures - Astronaut Lila</title>
+    <!-- Using Tailwind for utility classes and Inter font -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-dark: #2a1a5e; /* Deep Purple */
+            --secondary-dark: #3a2a7e; 
+            --title-yellow: #fdd835;
+            --text-white: #ffffff;
+            --card-radius: 20px;
+        }
+
+        body {
+            background-color: var(--primary-dark);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* --- Custom Title Style (Neon/Bold look) --- */
+        .character-title {
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 1;
+            text-shadow: 
+                -2px -2px 0 var(--secondary-dark),  
+                2px -2px 0 var(--secondary-dark),
+                -2px 2px 0 var(--secondary-dark),
+                2px 2px 0 var(--secondary-dark),
+                0 0 10px rgba(253, 216, 53, 0.7); /* Subtle yellow glow */
+            color: var(--title-yellow);
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+        }
+
+        /* --- Navigation Bar --- */
+        header {
+            background-color: var(--secondary-dark);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 20;
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            transition: color 0.2s ease;
+            font-weight: 600;
+        }
+        .nav-link:hover {
+            color: var(--title-yellow);
+        }
+
+        /* --- Mode Cards --- */
+        .mode-card {
+            border-radius: var(--card-radius);
+            padding: 2.5rem;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            height: 100%; /* Ensure uniform height in the grid */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .mode-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-description {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 768px) {
+            .character-title {
+                font-size: 2.5rem;
+            }
+            .mode-grid {
+                grid-template-columns: 1fr;
+            }
+            .card-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header / Navigation Bar -->
+    <header class="p-4 flex justify-between items-center w-full">
+        <div class="flex items-center space-x-2">
+            <span style="font-size: 1.5rem;">🚀</span>
+            <span class="text-xl font-black">Space Adventures</span>
+        </div>
+        <nav class="flex space-x-6 text-sm md:text-base">
+            <a href="#" class="nav-link">Home</a>
+            <a href="#" class="nav-link">Characters</a>
+            <a href="#" class="nav-link">Quiz</a>
+        </nav>
+        <div class="flex items-center space-x-1">
+            <span class="text-white text-sm hidden sm:inline">Your Cosmic Progress:</span>
+            <span class="text-xl">⭐</span>
+            <span class="text-xl">⭐</span>
+            <span class="text-xl text-gray-600">⭐</span>
+        </div>
+    </header>
+
+    <!-- Video Modal (Hidden by default) -->
+    <div id="videoModal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden flex items-center justify-center p-4 transition-opacity duration-300">
+        <div class="relative w-full max-w-4xl bg-gray-900 rounded-xl shadow-2xl p-4 md:p-6 transform scale-100 transition-transform duration-300">
+            <!-- Close Button -->
+            <button id="closeModal" class="absolute top-0 right-0 m-4 text-white text-3xl font-bold opacity-70 hover:opacity-100 transition z-50">&times;</button>
+            
+            <!-- Video Player -->
+            <video id="storyVideoPlayer" class="w-full rounded-lg" controls playsinline>
+                Your browser does not support the video tag.
+            </video>
+            <p class="text-center text-sm mt-3 text-gray-400 font-semibold">The quiz will automatically begin after the story video concludes.</p>
+        </div>
+    </div>
+    <!-- End Video Modal -->
+
+    <!-- Main Content Area -->
+    <main class="flex-grow flex flex-col items-center justify-start p-6 md:p-12 relative">
+        
+        <!-- Dynamic Character Content -->
+        <div class="text-center mb-8">
+            <h2 id="characterTitle" class="character-title mb-4 uppercase"></h2>
+            <p id="characterSlogan" class="text-xl md:text-2xl font-semibold opacity-90"></p>
+        </div>
+
+        <!-- Astronaut Emblems (Styled to match the image) -->
+        <div class="absolute w-full h-full inset-0 overflow-hidden pointer-events-none">
+            <!-- Emblems are now specific to Lila (Astronaut) -->
+            <span id="emblemLeft" class="text-7xl absolute top-1/4 left-5 opacity-50 transition-all duration-500 ease-in-out"></span>
+            <span id="emblemRight" class="text-7xl absolute top-1/4 right-5 opacity-50 transition-all duration-500 ease-in-out"></span>
+        </div>
+
+
+        <!-- Mode Cards Grid -->
+        <div id="modeCards" class="w-full max-w-5xl grid mode-grid gap-6 md:gap-8 transition-all duration-500 ease-in-out" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+            
+            <!-- Story Mode Card -->
+            <div id="storyCard" class="mode-card" style="background-color: var(--card-color-1);">
+                <span class="card-icon">📖</span>
+                <div class="card-title">Story Mode</div>
+                <div class="card-description">Read and explore adventures about space weather tailored to this character.</div>
+            </div>
+
+            <!-- Game Mode Card (Remains linked to the game file) -->
+            <div id="gameCard" class="mode-card" style="background-color: var(--card-color-2);">
+                <span class="card-icon">🎮</span>
+                <div class="card-title">Game Mode</div>
+                <div class="card-description">Play fun games and test your knowledge based on this character's specialty.</div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- CHARACTER DATA (Only Astronaut Lila remains) ---
+        const characters = [
+            {
+                id: 'lila',
+                title: 'Astronaut Lila',
+                role: 'SPACE EXPLORER LILA',
+                slogan: 'Discover the cosmos and navigate challenging space environments!',
+                emblem: '👩‍🚀', // Astronaut
+                color1: '#2ecc71', // Green
+                color2: '#3498db',  // Blue
+                // Links to local files
+                storyUrl: 'lila%20vid.mp4', 
+                gameUrl: 'astronut_game.html',
+                // New quiz URL destination after the story ends
+                quizUrl: 'astronaut_quiz.html'
+            }
+        ];
+
+        let activeCharacter = characters[0]; // Active character is now always Lila
+
+        // --- DOM Elements ---
+        const charTitleEl = document.getElementById('characterTitle');
+        const charSloganEl = document.getElementById('characterSlogan');
+        const storyCardEl = document.getElementById('storyCard');
+        const gameCardEl = document.getElementById('gameCard');
+        const emblemLeftEl = document.getElementById('emblemLeft');
+        const emblemRightEl = document.getElementById('emblemRight');
+        
+        // Modal Elements
+        const videoModal = document.getElementById('videoModal');
+        const storyVideoPlayer = document.getElementById('storyVideoPlayer');
+        const closeModal = document.getElementById('closeModal');
+
+
+        /**
+         * Renders the page content based on the character object.
+         */
+        function renderCharacter(character) {
+            // 1. Update Title and Slogan
+            charTitleEl.textContent = character.role;
+            charSloganEl.textContent = character.slogan;
+
+            // 2. Update Card Colors
+            storyCardEl.style.backgroundColor = character.color1;
+            gameCardEl.style.backgroundColor = character.color2;
+
+            // 3. Update Character Emblems
+            emblemLeftEl.textContent = character.emblem;
+            emblemRightEl.textContent = character.emblem;
+        }
+
+        // --- Initialization ---
+        window.onload = () => {
+            // Directly render Lila's content as she is the only character
+            renderCharacter(activeCharacter); 
+
+            // Add Event Listeners for click actions
+
+            // STORY CARD CLICK: Open Modal and Start Video
+            storyCardEl.addEventListener('click', () => {
+                // Set the video source dynamically
+                storyVideoPlayer.src = activeCharacter.storyUrl;
+                
+                // Show the modal and play the video
+                videoModal.classList.remove('hidden');
+                storyVideoPlayer.play();
+            });
+
+            // GAME CARD CLICK: Open Game File
+            gameCardEl.addEventListener('click', () => {
+                window.open(activeCharacter.gameUrl, '_blank');
+            });
+            
+            // VIDEO ENDED: Redirect to Quiz
+            storyVideoPlayer.addEventListener('ended', () => {
+                // Hide the modal before navigating
+                videoModal.classList.add('hidden');
+                
+                // Navigate to the quiz file in the same window
+                window.location.href = activeCharacter.quizUrl; 
+            });
+            
+            // MODAL CLOSE: Pause video and hide modal
+            closeModal.addEventListener('click', () => {
+                storyVideoPlayer.pause();
+                videoModal.classList.add('hidden');
+                // Optional: Clear src to stop preloading
+                storyVideoPlayer.src = ""; 
+            });
+        };
+    </script>
+</body>
+</html>

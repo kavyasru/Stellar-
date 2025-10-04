@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose Your Adventure: Space Weather</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Fredoka', sans-serif; 
+            overflow-x: hidden; /* Prevent horizontal scroll from stars */
+        }
+
+        /* Custom Colors for easier Tailwind config - Reduced to only the needed ones */
+        /* Maya's Color: Teal */
+        .bg-brand-teal { background-color: #1abc9c; }
+        .hover\:bg-brand-teal-dark:hover { background-color: #16a085; }
+        .border-teal-300 { border-color: #48c9b0; }
+        /* Lila's Color: Purple (from original) */
+        .bg-brand-purple { background-color: #9b59b6; }
+        .hover\:bg-brand-purple-dark:hover { background-color: #8e44ad; }
+        .border-purple-300 { border-color: #af7ac5; }
+        /* Sunny's Color: Yellow (from original) */
+        .bg-brand-yellow { background-color: #f1c40f; }
+        .hover\:bg-brand-yellow-dark:hover { background-color: #f39c12; }
+        .border-yellow-300 { border-color: #f4d03f; }
+
+
+        /* Starry Background Animation */
+        .stars {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; overflow: hidden; z-index: -1;
+        }
+        .star {
+            position: absolute; background: white; border-radius: 50%;
+            opacity: 0; animation: twinkle var(--duration) infinite var(--delay) ease-in-out;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Sun Animation */
+        .sun-spin { animation: spin 30s linear infinite; }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Hero Image Animation */
+        .hero-float { animation: float 4s ease-in-out infinite; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-900 via-purple-900 to-black text-slate-100 min-h-screen">
+
+    <div class="stars"></div>
+
+    <nav class= "bg-white/10 backdrop-blur-sm shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold text-yellow-300 hover:text-yellow-100 transition-colors">
+                🚀 Space Adventures
+            </a>
+            <ul class="flex space-x-6 text-lg">
+                <li><a href="index.html" class="hover:text-yellow-300 transition-colors">Home</a></li>
+                <li><a href="#characters" class="hover:text-yellow-300 transition-colors">Characters</a></li>
+                <li><a href="quiz.html" class="hover:text-yellow-300 transition-colors">Quiz</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="bg-gradient-to-r from-purple-700 to-blue-700 py-2">
+        <div class="container mx-auto px-4 flex items-center justify-end space-x-2">
+            <span class="font-bold text-yellow-300">Your Cosmic Progress:</span>
+            <span class="text-4xl text-yellow-300 animate-pulse" title="Complete a story!">⭐</span>
+            <span class="text-4xl text-gray-400" title="Locked">⭐</span>
+            <span class="text-4xl text-gray-400" title="Locked">⭐</span>
+        </div>
+    </div>
+
+    <main class="container mx-auto px-4 py-8 text-center relative z-10">
+        <header class="mb-12 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
+            <img src="https://static.vecteezy.com/system/resources/thumbnails/018/972/607/small/smile-sun-cartoon-character-png.png" alt="Cartoon Sun" class="w-40 h-40 md:w-48 md-h-48 sun-spin" />
+            <div>
+                <h1 class="text-6xl md:text-7xl font-bold text-yellow-400 drop-shadow-lg leading-tight">
+                    Choose Your Adventure
+                </h1>
+                <p class="text-3xl md:text-4xl text-yellow-200 mt-4">Space Weather Explorers!</p>
+            </div>
+            <img src="astro.png" alt="Friendly Astronaut" class="w-40 h-40 md:w-48 md-h-48 hero-float" />
+        </header>
+
+        <div id="characters" class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            
+            <a href="mayaful.html" class="bg-brand-teal hover:bg-brand-teal-dark p-8 rounded-3xl shadow-xl text-white font-bold text-3xl flex flex-col items-center justify-center transform hover:scale-105 transition-all duration-300 border-4 border-teal-300">
+                <div class="text-7xl mb-3">📸</div>
+                <h2>Photographer Maya</h2>
+                <p class="text-xl font-normal mt-2">Aurora & Celestial Views</p>
+            </a>
+            
+            <a href="asfull.html" class="bg-brand-purple hover:bg-brand-purple-dark p-8 rounded-3xl shadow-xl text-white font-bold text-3xl flex flex-col items-center justify-center transform hover:scale-105 transition-all duration-300 border-4 border-purple-300">
+                <div class="text-7xl mb-3">👩‍🚀</div>
+                <h2>Astronaut Lila</h2>
+                <p class="text-xl font-normal mt-2">Space Station & Radiation</p>
+            </a>
+            
+            <a href="sunful.html" class="bg-brand-yellow hover:bg-brand-yellow-dark p-8 rounded-3xl shadow-xl text-white font-bold text-3xl flex flex-col items-center justify-center transform hover:scale-105 transition-all duration-300 border-4 border-yellow-300">
+                <div class="text-7xl mb-3">☀️</div>
+                <h2>Sunny the Sun</h2>
+                <p class="text-xl font-normal mt-2">The Source of it All!</p>
+            </a>
+            
+        </div>
+    </main>
+
+    <script>
+        // JavaScript for the twinkling stars background (kept as is)
+        const starsContainer = document.querySelector('.stars');
+        const numStars = 100; // Adjust for more or fewer stars
+
+        for (let i = 0; i < numStars; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            const size = Math.random() * 3 + 1; // 1px to 4px
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+            star.style.setProperty('--duration', `${Math.random() * 2 + 1}s`); // 1s to 3s
+            star.style.setProperty('--delay', `${Math.random() * 2}s`); // 0s to 2s
+            starsContainer.appendChild(star);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose Your Path | Space Weather Adventure</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* General Body and Background Styling */
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #2c1a5b, #1a143a);
+            color: #ffffff;
+            overflow-x: hidden; /* Prevents horizontal scrollbar */
+        }
+
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative; /* Needed for positioning decorative elements */
+        }
+
+        /* Top Navigation Bar */
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 40px;
+            background-color: #4a237e; /* Purple bar from image */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            flex-shrink: 0; /* Prevents the header from shrinking */
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .main-nav a {
+            color: #ffffff;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .progress-tracker {
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .progress-tracker .star {
+            font-size: 1.8rem;
+            margin-left: 8px;
+            color: #ffd700;
+        }
+
+        /* Main Content Area */
+        .mode-chooser {
+            flex-grow: 1; /* Allows this section to fill available space */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        /* Title and Subtitle */
+        .title-section h1 {
+            font-family: 'Bangers', cursive;
+            font-size: 6rem;
+            color: #fdd835; /* Bright yellow */
+            letter-spacing: 3px;
+            text-shadow: 4px 4px 0 #000000;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .title-section .subtitle {
+            font-size: 1.5rem;
+            margin-top: 10px;
+            color: #e0e0e0;
+        }
+
+        /* Card Container and Individual Cards */
+        .card-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 40px;
+            flex-wrap: wrap; /* Allows cards to wrap on smaller screens */
+        }
+
+        .choice-card {
+            width: 280px;
+            padding: 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            color: #ffffff;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer; /* Change cursor to show it's clickable */
+            
+            /* Transition for Hover Effect */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Card-Specific Colors */
+        .story-card {
+            background: linear-gradient(135deg, #26a69a, #00796b); /* Teal/Blue */
+        }
+        .game-card {
+            background: linear-gradient(135deg, #ff7043, #d81b60); /* Orange/Purple */
+        }
+
+        .card-icon {
+            font-size: 4rem;
+        }
+
+        .card-text h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 15px 0 5px 0;
+        }
+
+        .card-text .card-description {
+            font-size: 1rem;
+            margin: 0;
+            line-height: 1.4;
+        }
+        
+        /* Hover Effects */
+        .choice-card:hover {
+            transform: scale(1.05) translateY(-10px);
+        }
+        .story-card:hover {
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 0 20px #26a69a; /* Glow effect */
+        }
+        .game-card:hover {
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 0 20px #ff7043; /* Glow effect */
+        }
+
+        /* Decorative Floating Elements */
+        .deco-sun, .deco-astronaut {
+            position: absolute;
+            width: 150px;
+            z-index: 0; /* Lower z-index so video pop-up appears on top */
+        }
+        .deco-sun {
+            top: 120px;
+            left: 5vw;
+        }
+        .deco-astronaut {
+            top: 150px;
+            right: 5vw;
+        }
+
+        /* === NEW CSS FOR VIDEO POP-UP === */
+        .video-modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stays in place */
+            z-index: 1000; /* Sits on top of everything */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85); /* Black background with opacity */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+        }
+
+        .video-modal-content {
+            position: relative;
+            width: 80%;
+            max-width: 900px;
+        }
+
+        #story-video {
+            width: 100%;
+            border-radius: 15px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            color: #ffffff;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        /* === END OF NEW CSS === */
+
+
+        /* Responsive Design for Tablets and smaller screens */
+        @media (max-width: 900px) {
+            .main-header {
+                padding: 10px 20px;
+            }
+            .title-section h1 {
+                font-size: 4.5rem;
+            }
+            .title-section .subtitle {
+                font-size: 1.2rem;
+            }
+            .card-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 25px;
+            }
+            .deco-sun, .deco-astronaut {
+                width: 120px; /* Make decorations smaller */
+            }
+        }
+
+        @media (max-width: 600px) {
+            .main-header {
+                flex-direction: column;
+                padding: 15px;
+            }
+            .main-nav {
+                margin: 10px 0;
+            }
+            .title-section h1 {
+                font-size: 3.5rem;
+            }
+            .deco-sun, .deco-astronaut {
+                display: none; /* Hide decorations on small screens */
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <header class="main-header">
+            <div class="logo">
+                <span role="img" aria-label="Rocket emoji">🚀</span>
+                Space Adventures
+            </div>
+            <nav class="main-nav">
+                <a href="#">Home</a>
+                <a href="#">Characters</a>
+                <a href="#">Quiz</a>
+            </nav>
+            <div class="progress-tracker">
+                <span>Your Cosmic Progress:</span>
+                <span class="star" role="img" aria-label="Star">⭐</span>
+                <span class="star" role="img" aria-label="Star">⭐</span>
+                <span class="star" role="img" aria-label="Star">⭐</span>
+            </div>
+        </header>
+
+        <main class="mode-chooser">
+            
+            <img src="astroo.png" alt="Smiling Sun" class="deco-sun">
+            <img src="astro.png" alt="Floating Astronaut" class="deco-astronaut">
+
+            <div class="title-section">
+                <h1>Pilot Pete</h1>
+                <p class="subtitle">Explore space weather in your own way!</p>
+            </div>
+
+            <div class="card-container">
+                
+                <a id="story-mode-link" class="choice-card story-card">
+                    <span class="card-icon" role="img" aria-label="Book emoji">📖</span>
+                    <div class="card-text">
+                        <h2>Story Mode</h2>
+                        <p class="card-description">Read and explore adventures about space weather.</p>
+                    </div>
+                </a>
+
+                <a href="#" class="choice-card game-card">
+                    <span class="card-icon" role="img" aria-label="Game controller emoji">🎮</span>
+                    <div class="card-text">
+                        <h2>Game Mode</h2>
+                        <p class="card-description">Play fun games and test your knowledge.</p>
+                    </div>
+                </a>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="video-modal" class="video-modal">
+        <div class="video-modal-content">
+            <span id="close-btn" class="close-btn">&times;</span>
+            <video id="story-video" controls>
+                <source src="Astronaut (9-12) Story Animation.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+    </div>
+    <script>
+        // Get the elements we need from the HTML
+        const storyModeLink = document.getElementById('story-mode-link');
+        const videoModal = document.getElementById('video-modal');
+        const closeBtn = document.getElementById('close-btn');
+        const storyVideo = document.getElementById('story-video');
+
+        // When the user clicks on the "Story Mode" card...
+        storyModeLink.addEventListener('click', function() {
+            // ...show the video modal by changing its display style.
+            videoModal.style.display = 'flex';
+        });
+
+        // When the user clicks on the close button (the 'x')...
+        closeBtn.addEventListener('click', function() {
+            // ...hide the modal.
+            videoModal.style.display = 'none';
+            // Also, pause the video so it doesn't keep playing in the background.
+            storyVideo.pause();
+        });
+
+        // Optional: When the user clicks anywhere outside of the video player...
+        window.addEventListener('click', function(event) {
+            // ...if the click target is the dark background...
+            if (event.target == videoModal) {
+                // ...hide the modal and pause the video.
+                videoModal.style.display = 'none';
+                storyVideo.pause();
+            }
+        });
+    </script>
+    </body>
+</html>

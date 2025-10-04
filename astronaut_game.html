@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shield the Station</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Cosmic Cobalt & Solar Orange -->
+    <!-- Application Structure Plan: The game uses a single-page, modal-driven structure. A central game screen displays the space station and interactive elements. Instructions, level progression, and success/failure messages are handled via modals that overlay this screen. This approach focuses the player on one task at a time, making it ideal for a child-friendly educational game. The user flow is linear: Start Screen -> Level 1 -> Level 2 -> Level 3 -> Final Success, with options to retry a level upon failure. This simple progression is intuitive and keeps the player engaged without causing confusion. -->
+    <!-- Visualization & Content Choices: 
+    - Solar Storm Threat: Goal: Inform about space weather danger. Viz: A 'Solar Activity' meter and a visual flare effect. Interaction: The meter fills up, triggering the level start. Justification: A visual gauge is more engaging than text. Method: HTML/CSS/JS.
+    - Resource Management: Goal: Teach prioritization. Viz: A space station with distinct modules and a limited 'Power' bank. Interaction: Player drags 'power cell' icons to modules. Justification: Drag-and-drop is a hands-on way to learn resource allocation. Method: HTML elements with JS drag/drop listeners.
+    - Emergency Protocols: Goal: Demonstrate the need for speed and accuracy. Viz: A timed, sequential checklist. Interaction: Player must click tasks in the correct order against a clock. Justification: Simulates the pressure of real-life emergency procedures. Method: HTML list with JS for timer and sequence validation.
+    - Learning Reinforcement: Goal: Provide positive feedback. Viz: Bright, congratulatory pop-up modals. Interaction: Simple button click to proceed. Justification: Reinforces accomplishment and encourages continued play. Method: HTML/CSS modals shown/hidden with JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-image: url('https://placehold.co/1920x1080/020617/0f172a?text=+.');
+            background-size: cover;
+            background-repeat: repeat;
+        }
+        .storm-warning {
+            animation: storm-flash 1s infinite;
+        }
+        @keyframes storm-flash {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
+            50% { box-shadow: 0 0 50px 20px rgba(255, 0, 0, 0); }
+        }
+        .shielded {
+            box-shadow: 0 0 20px 5px #00ffff, inset 0 0 15px 3px #00ffff;
+            border-color: #00ffff;
+        }
+        .protocol-item.complete {
+            text-decoration: line-through;
+            color: #4ade80;
+        }
+        .draggable {
+            touch-action: none;
+        }
+        .dragging {
+            opacity: 0.5;
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white flex items-center justify-center min-h-screen p-4 overflow-hidden">
+
+    <div id="game-container" class="w-full max-w-4xl mx-auto">
+        
+        <header class="text-center mb-4 p-2 bg-black bg-opacity-20 rounded-lg">
+            <h1 class="text-3xl md:text-5xl font-black text-cyan-300 tracking-widest">SHIELD THE STATION</h1>
+            <div id="status-bar" class="flex justify-around items-center mt-2 text-lg font-bold hidden">
+                <div>Level: <span id="level-display">1</span></div>
+                <div id="timer-container">Time: <span id="time-display">60</span>s</div>
+                <div id="power-container">Power: <span id="power-display">100</span>%</div>
+            </div>
+        </header>
+
+        <main id="game-board" class="relative w-full aspect-[16/9] bg-black bg-opacity-30 rounded-2xl border-2 border-slate-700 p-4 flex items-center justify-center">
+            <!-- Sun -->
+            <div id="sun" class="absolute -left-24 md:-left-32 top-1/2 -translate-y-1/2 w-24 h-24 md:w-32 md:h-32 bg-yellow-400 rounded-full flex items-center justify-center">
+                 <img src="https://placehold.co/100x100/f59e0b/92400e?text=SUN" alt="The Sun" class="rounded-full animate-pulse">
+                 <div id="solar-flare" class="hidden absolute left-full top-1/2 -translate-y-1/2 h-4 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
+            </div>
+
+            <!-- Space Station -->
+            <div id="station-area" class="w-2/3 h-full flex flex-col items-center justify-center gap-4">
+                 <div id="station-main" class="w-full max-w-md h-24 bg-slate-700 rounded-lg border-2 border-slate-500 flex items-center justify-center transition-all duration-300">
+                    <img src="https://placehold.co/400x80/334155/e0f2fe?text=Space+Station+Core" alt="Space Station" class="h-full w-full object-cover rounded-lg">
+                 </div>
+                 <div id="station-modules" class="hidden w-full max-w-lg grid-cols-3 gap-4">
+                    <div id="module-life-support" class="module h-24 bg-slate-600 rounded-lg border-2 border-slate-400 flex flex-col items-center justify-center p-2 text-center text-xs md:text-sm transition-all duration-300" data-module="life-support">
+                        <span>❤️</span> Life Support
+                    </div>
+                    <div id="module-comms" class="module h-24 bg-slate-600 rounded-lg border-2 border-slate-400 flex flex-col items-center justify-center p-2 text-center text-xs md:text-sm transition-all duration-300" data-module="comms">
+                        <span>📡</span> Comms
+                    </div>
+                    <div id="module-science" class="module h-24 bg-slate-600 rounded-lg border-2 border-slate-400 flex flex-col items-center justify-center p-2 text-center text-xs md:text-sm transition-all duration-300" data-module="science">
+                        <span>🔬</span> Science Labs
+                    </div>
+                 </div>
+            </div>
+            
+            <!-- Astronaut -->
+            <div id="astronaut" class="hidden absolute top-1/4 right-10 w-16 h-16 transition-all duration-1000">
+                <img src="https://placehold.co/60x60/e2e8f0/334155?text=🧑‍🚀" alt="Astronaut on EVA" class="rounded-full">
+            </div>
+
+            <!-- Level 2 Power Cells -->
+            <div id="power-cells-container" class="hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-4">
+                <div class="power-cell draggable w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-2xl font-black border-2 border-green-300 cursor-grab" draggable="true">⚡</div>
+                <div class="power-cell draggable w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-2xl font-black border-2 border-green-300 cursor-grab" draggable="true">⚡</div>
+                <div class="power-cell draggable w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-2xl font-black border-2 border-green-300 cursor-grab" draggable="true">⚡</div>
+            </div>
+            
+             <!-- Level 3 Protocol List -->
+            <div id="protocol-list" class="hidden absolute left-4 top-4 bg-slate-800 bg-opacity-80 p-4 rounded-lg">
+                <h3 class="font-bold text-lg mb-2">EVA Emergency Protocol</h3>
+                <ul>
+                    <li id="protocol-1" class="protocol-item cursor-pointer p-2 hover:bg-slate-700 rounded">1. Alert Astronaut</li>
+                    <li id="protocol-2" class="protocol-item cursor-pointer p-2 hover:bg-slate-700 rounded">2. Guide to Airlock</li>
+                    <li id="protocol-3" class="protocol-item cursor-pointer p-2 hover:bg-slate-700 rounded">3. Seal Airlock</li>
+                    <li id="protocol-4" class="protocol-item cursor-pointer p-2 hover:bg-slate-700 rounded">4. Activate Max Shields</li>
+                </ul>
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+        
+        <!-- Start Modal -->
+        <div id="start-modal" class="modal bg-slate-800 p-8 rounded-2xl shadow-2xl text-center max-w-lg border-2 border-cyan-400">
+             <img src="https://placehold.co/150x150/a5f3fc/083344?text=Mission+Control" alt="Mission Control" class="mx-auto mb-4 rounded-full">
+            <h2 class="text-3xl font-black mb-4">Mission Briefing</h2>
+            <p class="mb-6">Welcome, Commander! A massive solar storm is heading for our station. Your mission: protect the station and its crew by managing shields and following emergency protocols. Are you ready?</p>
+            <button id="start-game-btn" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold py-3 px-6 rounded-lg text-xl transition-transform transform hover:scale-105">Start Mission!</button>
+        </div>
+
+        <!-- Level Start/Success Modal -->
+        <div id="level-modal" class="hidden modal bg-slate-800 p-8 rounded-2xl shadow-2xl text-center max-w-lg border-2 border-green-400">
+            <h2 id="level-modal-title" class="text-3xl font-black mb-4">Well Done!</h2>
+            <p id="level-modal-text" class="mb-6">You've completed the level.</p>
+            <button id="next-level-btn" class="w-full bg-green-500 hover:bg-green-400 text-slate-900 font-bold py-3 px-6 rounded-lg text-xl transition-transform transform hover:scale-105">Continue</button>
+        </div>
+
+        <!-- Failure Modal -->
+        <div id="failure-modal" class="hidden modal bg-slate-800 p-8 rounded-2xl shadow-2xl text-center max-w-lg border-2 border-red-500">
+            <h2 class="text-3xl font-black mb-4 text-red-400">Mission Failure!</h2>
+            <p id="failure-modal-text" class="mb-6">The station has sustained critical damage.</p>
+            <button id="retry-level-btn" class="w-full bg-orange-500 hover:bg-orange-400 text-slate-900 font-bold py-3 px-6 rounded-lg text-xl transition-transform transform hover:scale-105">Try Again</button>
+        </div>
+        
+    </div>
+
+    <script>
+        const gameState = {
+            level: 0,
+            timer: null,
+            timeLeft: 0,
+            power: 100,
+            shieldedModules: [],
+            protocolStep: 0,
+            correctProtocol: ['protocol-1', 'protocol-2', 'protocol-3', 'protocol-4'],
+        };
+
+        const DOMElements = {
+            gameBoard: document.getElementById('game-board'),
+            statusBar: document.getElementById('status-bar'),
+            levelDisplay: document.getElementById('level-display'),
+            timerContainer: document.getElementById('timer-container'),
+            timeDisplay: document.getElementById('time-display'),
+            powerContainer: document.getElementById('power-container'),
+            powerDisplay: document.getElementById('power-display'),
+            modalOverlay: document.getElementById('modal-overlay'),
+            startModal: document.getElementById('start-modal'),
+            levelModal: document.getElementById('level-modal'),
+            failureModal: document.getElementById('failure-modal'),
+            levelModalTitle: document.getElementById('level-modal-title'),
+            levelModalText: document.getElementById('level-modal-text'),
+            failureModalText: document.getElementById('failure-modal-text'),
+            startGameBtn: document.getElementById('start-game-btn'),
+            nextLevelBtn: document.getElementById('next-level-btn'),
+            retryLevelBtn: document.getElementById('retry-level-btn'),
+            sun: document.getElementById('sun'),
+            solarFlare: document.getElementById('solar-flare'),
+            stationMain: document.getElementById('station-main'),
+            stationModules: document.getElementById('station-modules'),
+            modules: document.querySelectorAll('.module'),
+            astronaut: document.getElementById('astronaut'),
+            powerCellsContainer: document.getElementById('power-cells-container'),
+            powerCells: document.querySelectorAll('.power-cell'),
+            protocolList: document.getElementById('protocol-list'),
+            protocolItems: document.querySelectorAll('.protocol-item'),
+        };
+
+        const levelConfig = {
+            1: {
+                time: 10,
+                task: "A minor solar flare is detected! Click the main station core to activate the primary shields before it hits!",
+                success: "Level 1 Complete! Primary shields are up. You've protected the station's main systems from the initial flare.",
+            },
+            2: {
+                time: 25,
+                task: "A bigger storm is coming! Power is limited. Drag the ⚡ power cells to shield the two most critical modules: ❤️ Life Support and 📡 Comms.",
+                success: "Level 2 Complete! Excellent prioritizing, Commander. You've saved the critical systems by managing power effectively.",
+            },
+            3: {
+                time: 20,
+                task: "CODE RED! A massive CME is imminent and an astronaut is on EVA! Follow the emergency protocol checklist in the correct order, FAST!",
+                success: "MISSION ACCOMPLISHED! You're a hero! You saved the astronaut and the station from a massive solar storm. You have what it takes to be a Space Weather Officer!",
+            }
+        };
+        
+        function showModal(modal) {
+            DOMElements.modalOverlay.classList.remove('hidden');
+            DOMElements.modalOverlay.classList.add('flex');
+            document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+            modal.classList.remove('hidden');
+        }
+
+        function hideModals() {
+            DOMElements.modalOverlay.classList.add('hidden');
+            DOMElements.modalOverlay.classList.remove('flex');
+        }
+
+        function updateStatus() {
+            DOMElements.levelDisplay.textContent = gameState.level;
+            DOMElements.powerDisplay.textContent = gameState.power;
+            DOMElements.timeDisplay.textContent = gameState.timeLeft;
+        }
+        
+        function startTimer(duration, onEnd) {
+            gameState.timeLeft = duration;
+            updateStatus();
+            gameState.timer = setInterval(() => {
+                gameState.timeLeft--;
+                updateStatus();
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timer);
+                    onEnd();
+                }
+            }, 1000);
+        }
+
+        function triggerSolarFlare() {
+            DOMElements.solarFlare.classList.remove('hidden');
+            DOMElements.solarFlare.style.width = '0px';
+            setTimeout(() => {
+                DOMElements.solarFlare.style.transition = `width ${gameState.timeLeft}s linear`;
+                DOMElements.solarFlare.style.width = '500px';
+                DOMElements.gameBoard.classList.add('storm-warning');
+            }, 100);
+        }
+
+        function resetSolarFlare() {
+            DOMElements.solarFlare.classList.add('hidden');
+            DOMElements.solarFlare.style.transition = 'none';
+            DOMElements.gameBoard.classList.remove('storm-warning');
+        }
+
+        function levelSuccess() {
+            clearInterval(gameState.timer);
+            resetSolarFlare();
+            const config = levelConfig[gameState.level];
+            
+            if (!config) {
+                // Guard against config being undefined (e.g., if gameState.level is 0)
+                DOMElements.levelModalTitle.textContent = "Mission Complete!";
+                DOMElements.levelModalText.textContent = "The operation is finished. Well done, Commander!";
+                DOMElements.nextLevelBtn.textContent = "Play Again";
+                DOMElements.statusBar.classList.add('hidden');
+            } else {
+                DOMElements.levelModalTitle.textContent = gameState.level === 3 ? "Mission Accomplished!" : `Level ${gameState.level} Complete!`;
+                DOMElements.levelModalText.textContent = config.success;
+                DOMElements.nextLevelBtn.textContent = gameState.level === 3 ? "Play Again" : "Next Level";
+            }
+
+            showModal(DOMElements.levelModal);
+        }
+
+        function levelFailure(reason) {
+            clearInterval(gameState.timer);
+            resetSolarFlare();
+            DOMElements.failureModalText.textContent = reason || "The solar storm overwhelmed the station's defenses!";
+            showModal(DOMElements.failureModal);
+        }
+
+        function setupLevel(level) {
+            if (level > 3 || level < 1) {
+                gameState.level = 0;
+                resetLevelState();
+                DOMElements.statusBar.classList.add('hidden');
+                showModal(DOMElements.startModal);
+                return;
+            }
+
+            gameState.level = level;
+            resetLevelState();
+            hideModals();
+            DOMElements.statusBar.classList.remove('hidden');
+
+            const config = levelConfig[level];
+            
+            DOMElements.levelModalTitle.textContent = `Level ${level}: Briefing`;
+            DOMElements.levelModalText.textContent = config.task;
+            DOMElements.nextLevelBtn.textContent = "Start Level";
+            showModal(DOMElements.levelModal);
+
+            DOMElements.nextLevelBtn.onclick = () => {
+                hideModals();
+                startLevelGameplay(level);
+            };
+        }
+
+        function startLevelGameplay(level) {
+            const config = levelConfig[level];
+            
+            if (level === 1) {
+                DOMElements.powerContainer.classList.add('hidden');
+                DOMElements.timerContainer.classList.remove('hidden');
+                DOMElements.stationMain.onclick = () => {
+                    DOMElements.stationMain.classList.add('shielded');
+                    DOMElements.stationMain.onclick = null;
+                    setTimeout(levelSuccess, 500);
+                };
+            } else if (level === 2) {
+                DOMElements.powerContainer.classList.remove('hidden');
+                DOMElements.timerContainer.classList.remove('hidden');
+                DOMElements.stationModules.classList.remove('hidden');
+                DOMElements.stationModules.style.display = 'grid';
+                DOMElements.powerCellsContainer.classList.remove('hidden');
+                DOMElements.stationMain.classList.add('h-16'); 
+                gameState.power = 100;
+                gameState.shieldedModules = [];
+            } else if (level === 3) {
+                DOMElements.powerContainer.classList.add('hidden');
+                DOMElements.timerContainer.classList.remove('hidden');
+                DOMElements.stationModules.classList.add('hidden');
+                DOMElements.stationMain.classList.remove('h-16');
+                DOMElements.astronaut.classList.remove('hidden');
+                DOMElements.protocolList.classList.remove('hidden');
+                gameState.protocolStep = 0;
+            }
+
+            startTimer(config.time, () => levelFailure("You ran out of time!"));
+            triggerSolarFlare();
+        }
+
+        function resetLevelState() {
+            DOMElements.stationMain.classList.remove('shielded');
+            DOMElements.stationMain.onclick = null;
+            DOMElements.modules.forEach(m => m.classList.remove('shielded'));
+            DOMElements.stationModules.classList.add('hidden');
+            DOMElements.powerCellsContainer.classList.add('hidden');
+            DOMElements.powerCells.forEach(pc => pc.style.display = 'flex');
+            DOMElements.astronaut.classList.add('hidden');
+            DOMElements.astronaut.style.right = '40px';
+            DOMElements.protocolList.classList.add('hidden');
+            DOMElements.protocolItems.forEach(pi => pi.classList.remove('complete'));
+            DOMElements.gameBoard.classList.remove('storm-warning');
+        }
+
+        function checkLevel2WinCondition() {
+            const hasLifeSupport = gameState.shieldedModules.includes('life-support');
+            const hasComms = gameState.shieldedModules.includes('comms');
+            if(hasLifeSupport && hasComms) {
+                levelSuccess();
+            }
+        }
+        
+        function handleProtocolClick(e) {
+            if (e.target.id === gameState.correctProtocol[gameState.protocolStep]) {
+                e.target.classList.add('complete');
+                gameState.protocolStep++;
+
+                if (e.target.id === 'protocol-2') {
+                    DOMElements.astronaut.style.right = 'calc(66% - 80px)';
+                }
+                
+                if (gameState.protocolStep === gameState.correctProtocol.length) {
+                    DOMElements.stationMain.classList.add('shielded');
+                    setTimeout(levelSuccess, 500);
+                }
+            } else {
+                levelFailure("You followed the protocol in the wrong order!");
+            }
+        }
+
+        DOMElements.startGameBtn.addEventListener('click', () => {
+             setupLevel(1);
+        });
+
+        DOMElements.nextLevelBtn.addEventListener('click', () => {
+            if (gameState.level === 3) {
+                // If current level is 3, clicking 'Next Level' should trigger level 0 (restart)
+                setupLevel(0);
+            } else {
+                setupLevel(gameState.level + 1);
+            }
+        });
+        
+        DOMElements.retryLevelBtn.addEventListener('click', () => {
+            setupLevel(gameState.level);
+        });
+        
+        DOMElements.protocolItems.forEach(item => {
+            item.addEventListener('click', handleProtocolClick);
+        });
+        
+        // Drag and Drop Logic for Level 2
+        let draggedItem = null;
+        DOMElements.powerCells.forEach(cell => {
+            cell.addEventListener('dragstart', (e) => {
+                draggedItem = e.target;
+                setTimeout(() => e.target.classList.add('dragging'), 0);
+            });
+            cell.addEventListener('dragend', (e) => {
+                 e.target.classList.remove('dragging');
+            });
+        });
+
+        DOMElements.modules.forEach(module => {
+            module.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            module.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                module.style.backgroundColor = '#475569';
+            });
+            module.addEventListener('dragleave', (e) => {
+                module.style.backgroundColor = '';
+            });
+            module.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (draggedItem && draggedItem.style.display !== 'none') {
+                    const moduleName = module.dataset.module;
+                    if (!gameState.shieldedModules.includes(moduleName)) {
+                        module.classList.add('shielded');
+                        draggedItem.style.display = 'none';
+                        gameState.shieldedModules.push(moduleName);
+                        gameState.power -= 25;
+                        updateStatus();
+                        draggedItem = null;
+                        checkLevel2WinCondition();
+                    }
+                }
+                module.style.backgroundColor = '';
+            });
+        });
+
+
+        window.onload = () => {
+            showModal(DOMElements.startModal);
+        };
+    </script>
+</body>
+</html>

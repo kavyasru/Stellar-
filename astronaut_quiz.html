@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shield the Station Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght=400;700;900&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Cosmic Cobalt & Solar Orange (Primary: slate-900, Accent: cyan-500, Success: green-500) -->
+    <!-- Application Structure Plan: The application uses a central, single-question card structure within a persistent cosmic background. Progression is linear (Level 1 -> 2 -> 3), managed by JavaScript state. Modals are used for the Mission Briefing, Level Appreciation (showing score), and Final Results. This structure provides a clear, focused environment ideal for a children's educational quiz, minimizing distractions and guiding the user step-by-step. -->
+    <!-- Visualization & Content Choices: 
+    - Question Card: Goal: Present questions clearly. Viz: A centered, rounded card. Interaction: Radio buttons for selection, a "Submit" button for validation. Justification: Standard, accessible quiz format. Method: HTML/CSS/JS.
+    - Status Bar: Goal: Track score and level. Viz: Persistent bar at the top. Justification: Provides continuous context on performance. Method: HTML/CSS/JS.
+    - Appreciation Modals: Goal: Provide positive feedback and show results. Viz: Bright, congratulatory pop-up modals. Interaction: Simple button click to proceed to the next question set. Justification: Reinforces accomplishment. Method: HTML/CSS modals shown/hidden with JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-image: url('https://placehold.co/1920x1080/020617/0f172a?text=+.');
+            background-size: cover;
+            background-repeat: repeat;
+        }
+        .quiz-option {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .quiz-option:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        }
+        .quiz-option input:checked + label {
+            background-color: #0891b2; /* cyan-600 */
+            color: white;
+            border-color: #00ffff;
+        }
+        .answer-label {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid #334155; /* slate-700 */
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white flex items-center justify-center min-h-screen p-4 overflow-hidden">
+
+    <div id="game-container" class="w-full max-w-4xl mx-auto">
+        
+        <header class="text-center mb-6 p-3 bg-black bg-opacity-30 rounded-lg">
+            <h1 class="text-3xl md:text-5xl font-black text-cyan-300 tracking-widest">SHIELD THE STATION QUIZ</h1>
+            <div id="status-bar" class="flex justify-around items-center mt-3 text-lg font-bold">
+                <div>Level: <span id="level-display">0</span>/3</div>
+                <div>Score: <span id="score-display">0</span></div>
+            </div>
+        </header>
+
+        <main id="quiz-board" class="bg-slate-800 bg-opacity-90 rounded-2xl shadow-2xl p-6 md:p-10 border-2 border-slate-700">
+            
+            <!-- Quiz Card -->
+            <div id="quiz-card" class="hidden">
+                <p id="question-number" class="text-lg font-semibold text-cyan-400 mb-2">Level 1 - Question 1 of 3</p>
+                <h2 id="question-text" class="text-xl md:text-2xl font-bold mb-6"></h2>
+                
+                <form id="options-form" class="space-y-4">
+                    <!-- Options are injected here by JavaScript -->
+                </form>
+
+                <div id="feedback-message" class="text-center mt-6 p-3 rounded-lg font-bold hidden"></div>
+
+                <button id="submit-btn" class="w-full mt-8 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold py-3 px-6 rounded-lg text-xl transition-transform transform hover:scale-105">Submit Answer</button>
+            </div>
+            
+        </main>
+
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+        
+        <!-- Start Modal (Initial Briefing) -->
+        <div id="start-modal" class="modal bg-slate-800 p-8 rounded-2xl shadow-2xl text-center max-w-lg border-2 border-cyan-400">
+             <img src="https://placehold.co/150x150/a5f3fc/083344?text=Mission+Briefing" alt="Mission Control" class="mx-auto mb-4 rounded-full">
+            <h2 class="text-3xl font-black mb-4">Mission Briefing: The Quiz</h2>
+            <p class="mb-6">Commander, your new mission is a three-level knowledge test. You must answer questions about space weather protocols and risk management to prove you are ready to Shield the Station! Good luck!</p>
+            <button id="start-quiz-btn" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold py-3 px-6 rounded-lg text-xl transition-transform transform hover:scale-105">Start Quiz!</button>
+        </div>
+
+        <!-- Level Appreciation Modal -->
+        <div id="level-modal" class="hidden modal bg-slate-800 p-8 rounded-2xl shadow-2xl text-center max-w-lg border-2 border-green-400">
+            <h2 id="level-modal-title" class="text-3xl font-black mb-4 text-green-400">Level Complete!</h2>
+            <p id="level-modal-text" class="mb-6"></p>
+            <p id="level-score-summary" class="text-2xl font-extrabold mb-6">Your Level Score: <span id="level-score"></span> / 3</p>
+            <button id="next-level-btn" class="w-full bg-green-500 hover:bg-green-400 text-slate-900 font-bold py-3 px-6 rounded-lg text-xl transition-transform transform hover:scale-105">Continue</button>
+        </div>
+
+        <!-- Final Results Modal -->
+        <div id="final-modal" class="hidden modal bg-slate-800 p-8 rounded-2xl shadow-2xl text-center max-w-lg border-2 border-yellow-400">
+            <h2 class="text-3xl font-black mb-4 text-yellow-400">Mission Accomplished!</h2>
+            <p class="mb-4 text-lg">You have completed all levels and protected the station!</p>
+            <p class="text-4xl font-extrabold mb-6">Total Score: <span id="final-score"></span> / 9</p>
+            <button id="restart-quiz-btn" class="w-full bg-orange-500 hover:bg-orange-400 text-slate-900 font-bold py-3 px-6 rounded-lg text-xl transition-transform transform hover:scale-105">Restart Quiz</button>
+        </div>
+        
+    </div>
+
+    <script>
+        const quizData = {
+            1: [
+                {
+                    q: "What causes a sudden, intense burst of radiation that threatens the station?",
+                    options: ["Solar Wind", "Asteroid Impact", "Solar Flare", "Moon Quake"],
+                    a: "Solar Flare"
+                },
+                {
+                    q: "What is the primary action to protect the station's main core from a minor solar flare?",
+                    options: ["Turn off all power", "Activate primary shields", "Change station orbit", "Send out the robot"],
+                    a: "Activate primary shields"
+                },
+                {
+                    q: "Solar flares release radiation. What is the most immediate danger to unshielded electronics?",
+                    options: ["It makes them cold", "It causes dust buildup", "It causes circuits to fail", "It makes them glow"],
+                    a: "It causes circuits to fail"
+                },
+            ],
+            2: [
+                {
+                    q: "Power is limited during a major storm. Which system must be prioritized to keep the crew breathing?",
+                    options: ["Science Labs", "Communication System", "Life Support System", "Entertainment Hub"],
+                    a: "Life Support System"
+                },
+                {
+                    q: "Why must the Communication (Comms) module be prioritized second?",
+                    options: ["To watch movies", "To talk to Earth for help", "To control the Moon base", "To listen to space sounds"],
+                    a: "To talk to Earth for help"
+                },
+                {
+                    q: "If you successfully shield only the two most critical modules (Life Support and Comms), what happens to the Science Labs?",
+                    options: ["They gain extra power", "They must be shut down (deprioritized)", "They start automatically", "They send data to Earth"],
+                    a: "They must be shut down (deprioritized)"
+                },
+            ],
+            3: [
+                {
+                    q: "An astronaut is outside (EVA) and a Code Red storm hits. What is the **immediate first step** in the protocol?",
+                    options: ["Seal the airlock door", "Tell them to wait for the storm", "Alert the astronaut to return immediately", "Activate maximum shields"],
+                    a: "Alert the astronaut to return immediately"
+                },
+                {
+                    q: "Where does the astronaut need to go to be safest from the immediate radiation risk?",
+                    options: ["The darkest side of the station", "The deepest core module", "The airlock chamber", "The outside storage area"],
+                    a: "The deepest core module"
+                },
+                {
+                    q: "Why is following the emergency protocol steps in the correct order so important?",
+                    options: ["It saves time and lives", "It looks neat on the checklist", "It makes the lights flash", "It's just a tradition"],
+                    a: "It saves time and lives"
+                },
+            ],
+        };
+
+        const gameState = {
+            level: 0, 
+            questionIndex: 0,
+            score: 0,
+            levelScore: 0,
+            totalScore: 0,
+            isAnswering: true,
+        };
+
+        const DOMElements = {
+            levelDisplay: document.getElementById('level-display'),
+            scoreDisplay: document.getElementById('score-display'),
+            quizCard: document.getElementById('quiz-card'),
+            questionNumber: document.getElementById('question-number'),
+            questionText: document.getElementById('question-text'),
+            optionsForm: document.getElementById('options-form'),
+            feedbackMessage: document.getElementById('feedback-message'),
+            submitBtn: document.getElementById('submit-btn'),
+            
+            modalOverlay: document.getElementById('modal-overlay'),
+            startModal: document.getElementById('start-modal'),
+            levelModal: document.getElementById('level-modal'),
+            finalModal: document.getElementById('final-modal'),
+            levelModalTitle: document.getElementById('level-modal-title'),
+            levelModalText: document.getElementById('level-modal-text'),
+            levelScoreSummary: document.getElementById('level-score-summary'),
+            levelScore: document.getElementById('level-score'),
+            finalScore: document.getElementById('final-score'),
+            
+            startQuizBtn: document.getElementById('start-quiz-btn'),
+            nextLevelBtn: document.getElementById('next-level-btn'),
+            restartQuizBtn: document.getElementById('restart-quiz-btn'),
+        };
+
+        function showModal(modal) {
+            DOMElements.modalOverlay.classList.remove('hidden');
+            DOMElements.modalOverlay.classList.add('flex');
+            document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+            modal.classList.remove('hidden');
+        }
+
+        function hideModals() {
+            DOMElements.modalOverlay.classList.add('hidden');
+            DOMElements.modalOverlay.classList.remove('flex');
+        }
+
+        function updateStatus() {
+            DOMElements.levelDisplay.textContent = gameState.level;
+            DOMElements.scoreDisplay.textContent = gameState.totalScore;
+        }
+
+        function displayQuestion() {
+            if (gameState.level > 3) {
+                showFinalResults();
+                return;
+            }
+            
+            const levelQuestions = quizData[gameState.level];
+            const qIndex = gameState.questionIndex;
+
+            if (qIndex >= levelQuestions.length) {
+                showLevelAppreciation();
+                return;
+            }
+
+            const currentQ = levelQuestions[qIndex];
+            
+            gameState.isAnswering = true;
+            DOMElements.feedbackMessage.classList.add('hidden');
+            DOMElements.quizCard.classList.remove('hidden');
+            DOMElements.submitBtn.disabled = false;
+            DOMElements.submitBtn.textContent = "Submit Answer";
+            
+            DOMElements.questionNumber.textContent = `Level ${gameState.level} - Question ${qIndex + 1} of ${levelQuestions.length}`;
+            DOMElements.questionText.textContent = currentQ.q;
+            
+            DOMElements.optionsForm.innerHTML = currentQ.options.map((option, index) => `
+                <div class="quiz-option rounded-lg border-2 border-transparent">
+                    <input type="radio" id="option${index}" name="answer" value="${option}" class="hidden" />
+                    <label for="option${index}" class="answer-label block text-left font-semibold hover:bg-slate-700 transition duration-150">${option}</label>
+                </div>
+            `).join('');
+
+            updateStatus();
+        }
+
+        function checkAnswer(e) {
+            e.preventDefault();
+            if (!gameState.isAnswering) return;
+
+            const selectedOption = DOMElements.optionsForm.querySelector('input[name="answer"]:checked');
+            
+            if (!selectedOption) {
+                // Use the feedback message for required selection instead of an alert
+                DOMElements.feedbackMessage.classList.remove('hidden', 'bg-red-900', 'bg-green-900');
+                DOMElements.feedbackMessage.classList.add('bg-orange-800');
+                DOMElements.feedbackMessage.textContent = "Please select an answer first, Commander!";
+                return;
+            }
+
+            gameState.isAnswering = false;
+            const correctA = quizData[gameState.level][gameState.questionIndex].a;
+            
+            DOMElements.feedbackMessage.classList.remove('hidden', 'bg-orange-800');
+            
+            // Highlight the correct answer
+            DOMElements.optionsForm.querySelectorAll('input').forEach(input => {
+                const label = input.nextElementSibling;
+                if (input.value === correctA) {
+                    label.classList.add('border-green-500', 'bg-green-900');
+                } else if (input.checked) {
+                    label.classList.add('border-red-500', 'bg-red-900');
+                }
+            });
+
+            if (selectedOption.value === correctA) {
+                gameState.levelScore++;
+                gameState.totalScore++;
+                DOMElements.feedbackMessage.classList.add('bg-green-900');
+                DOMElements.feedbackMessage.textContent = "Correct! Excellent protocol knowledge!";
+            } else {
+                DOMElements.feedbackMessage.classList.add('bg-red-900');
+                DOMElements.feedbackMessage.textContent = `Incorrect. The correct answer was: ${correctA}`;
+            }
+
+            DOMElements.submitBtn.textContent = "Next Question";
+            DOMElements.submitBtn.onclick = () => {
+                gameState.questionIndex++;
+                displayQuestion();
+            };
+            updateStatus();
+        }
+
+        function showLevelAppreciation() {
+            DOMElements.quizCard.classList.add('hidden');
+            
+            DOMElements.levelModalTitle.textContent = gameState.level === 3 ? "Mission Complete!" : `Level ${gameState.level} Cleared!`;
+            
+            let message = "";
+            if (gameState.levelScore === 3) {
+                message = "Perfect Score! You are a brilliant Space Weather Officer!";
+                DOMElements.levelModal.classList.remove('border-red-400');
+                DOMElements.levelModal.classList.add('border-green-400');
+            } else if (gameState.levelScore >= 2) {
+                message = "Great job! You secured the critical systems and moved on.";
+                DOMElements.levelModal.classList.remove('border-red-400');
+                DOMElements.levelModal.classList.add('border-green-400');
+            } else {
+                message = "You faced some challenges, but you're ready for the next level. Review those protocols!";
+                DOMElements.levelModal.classList.remove('border-green-400');
+                DOMElements.levelModal.classList.add('border-red-400');
+            }
+            DOMElements.levelModalText.textContent = message;
+            DOMElements.levelScore.textContent = gameState.levelScore;
+            DOMElements.nextLevelBtn.textContent = gameState.level === 3 ? "View Final Results" : "Start Next Level";
+            
+            showModal(DOMElements.levelModal);
+        }
+
+        function showFinalResults() {
+            hideModals();
+            DOMElements.finalScore.textContent = gameState.totalScore;
+            showModal(DOMElements.finalModal);
+        }
+
+        function startQuiz() {
+            gameState.level = 1;
+            gameState.questionIndex = 0;
+            gameState.levelScore = 0;
+            gameState.totalScore = 0;
+            hideModals();
+            displayQuestion();
+        }
+        
+        function setupNextLevel() {
+            gameState.level++;
+            gameState.questionIndex = 0;
+            gameState.levelScore = 0;
+            
+            if (gameState.level > 3) {
+                showFinalResults();
+            } else {
+                hideModals();
+                displayQuestion();
+            }
+        }
+
+        // --- Event Listeners ---
+        DOMElements.startQuizBtn.addEventListener('click', startQuiz);
+        DOMElements.nextLevelBtn.addEventListener('click', setupNextLevel);
+        DOMElements.restartQuizBtn.addEventListener('click', startQuiz);
+        DOMElements.submitBtn.addEventListener('click', checkAnswer);
+
+        // --- Initialization ---
+        window.onload = () => {
+            updateStatus();
+            showModal(DOMElements.startModal);
+        };
+    </script>
+</body>
+</html>
